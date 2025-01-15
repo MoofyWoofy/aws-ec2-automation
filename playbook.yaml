@@ -1,0 +1,11 @@
+---
+- name: update system
+  hosts: "all"
+  become: true # use root permissions
+  gather_facts: false
+  roles:
+    - update-system
+    - install-packages
+    - sshd
+    - docker
+    - caddy

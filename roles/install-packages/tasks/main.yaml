@@ -1,0 +1,11 @@
+---
+- name: Installing all necessary packages
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - vim
+    - htop
+    - git
+    - python3-venv
+    - python3-systemd

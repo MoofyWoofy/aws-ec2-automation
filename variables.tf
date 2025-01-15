@@ -11,9 +11,12 @@ variable "aws_region" {
   type        = string
 }
 
-variable "ssh_public_key" {
-  description = "SSH public key file location"
-  type        = string
+variable "ssh_key_pair" {
+  description = "SSH key pair location"
+  type = object({
+    public  = string
+    private = string
+  })
 }
 
 variable "vm_instance" {

@@ -26,6 +26,9 @@ resource "aws_vpc_security_group_ingress_rule" "allow_ports" {
   ip_protocol = each.value.ip_protocol
   from_port   = each.value.from_port
   to_port     = each.value.to_port
+  tags = {
+    "Name" = each.key
+  }
 
   security_group_id = aws_security_group.allow_ports_to_vps.id
 }
@@ -37,7 +40,7 @@ resource "aws_vpc_security_group_egress_rule" "allow_all_traffic_ipv4" {
 }
 
 resource "aws_key_pair" "ec2_keys" {
-  public_key = file(var.ssh_public_key)
+  public_key = file(var.ssh_key_pair.public)
   key_name   = "OpenTofu key"
 }
 
@@ -59,15 +62,20 @@ resource "aws_instance" "vps" {
     delete_on_termination = true
   }
 
-  user_data = <<-EOF
-              #!/bin/bash
-              # Commands to run after the instance starts
-              apt-get update
-              apt-get upgrade -y
-              apt-get install -y htop git python3-venv
-              echo "${var.hostname}" > /etc/hostname
-              reboot
-              EOF
+  # Run Ansible playbook
+  provisioner "remote-exec" {
+    inline = ["echo 'Wait until SSH is ready'"]
+
+    connection {
+      type        = "ssh"
+      user        = "admin"
+      private_key = file(var.ssh_key_pair.private)
+      host        = aws_instance.vps.public_ip
+    }
+  }
+  provisioner "local-exec" {
+    command = "ansible-playbook --ssh-common-args='-o StrictHostKeyChecking=no' -i ${aws_instance.vps.public_ip}, -u admin --private-key ${var.ssh_key_pair.private} playbook.yaml"
+  }
 }
 
 # Display ec2 IP address

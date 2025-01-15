@@ -12,8 +12,12 @@ aws_api_key = {
 }
 
 aws_region     = "ap-southeast-1"
-ssh_public_key = "~/.ssh/id_rsa.pub"
 hostname       = "ec2"
+
+ssh_key_pair = {
+  public  = "~/.ssh/id_rsa.pub"
+  private = "~/.ssh/id_rsa"
+}
 
 vm_instance = {
   ami           = "ami-0acbb557db23991cc"

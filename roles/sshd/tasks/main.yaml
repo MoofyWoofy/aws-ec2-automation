@@ -1,0 +1,42 @@
+---
+- name: Disable password authentication
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^PasswordAuthentication'
+    line: PasswordAuthentication no
+
+- name: Allow root login with key-based authentication
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^PermitRootLogin'
+    line: PermitRootLogin prohibit-password
+
+- name: Install fail2ban
+  ansible.builtin.apt:
+    name: "fail2ban"
+    state: present
+
+- name: Create conf file for fail2ban
+  ansible.builtin.blockinfile:
+    create: true
+    path: /etc/fail2ban/jail.local
+    mode: '644'
+    append_newline: true
+    block: |
+      [DEFAULT]
+      # Debian 12 has no log files, just journalctl
+      backend = systemd
+      # "bantime" is the number of seconds that a host is banned.
+      bantime  = 1d
+      # "maxretry" is the number of failures before a host get banned.
+      maxretry = 5
+      # A host is banned if it has generated "maxretry" during the last "findtime"
+      findtime  = 1h
+      [sshd]
+      enabled = true
+
+- name: Ensure fail2ban is running
+  ansible.builtin.systemd_service:
+    name: fail2ban
+    state: started
+    enabled: true
